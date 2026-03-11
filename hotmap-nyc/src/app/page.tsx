@@ -42,12 +42,6 @@ export default function LandingPage() {
       <section className="pt-12 min-h-screen flex flex-col">
         <div className="flex-1 flex flex-col justify-center px-6 max-w-screen-xl mx-auto w-full py-24">
 
-          {/* Eyebrow */}
-          <div className="flex items-center gap-2 mb-8">
-            <div className="live-indicator" />
-            <span className="label-caps">Live · New York City</span>
-          </div>
-
           {/* Headline — editorial serif, massive */}
           <h1 className="heading-xl text-[clamp(4rem,12vw,9rem)] text-ghost mb-8 max-w-4xl">
             Know the vibe<br />
@@ -70,7 +64,7 @@ export default function LandingPage() {
         </div>
 
         {/* Live ticker strip */}
-        <div className="border-t border-wire" style={{ background: '#0C0C0C' }}>
+        {/* <div className="border-t border-wire" style={{ background: '#0C0C0C' }}>
           <div className="max-w-screen-xl mx-auto px-6 py-5">
             <div className="flex items-center gap-6 overflow-x-auto pb-1">
               <span className="label-caps flex-shrink-0">Live now</span>
@@ -91,7 +85,7 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
-        </div>
+        </div> */}
       </section>
 
       {/* How it works */}

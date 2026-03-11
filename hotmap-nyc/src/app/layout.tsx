@@ -17,7 +17,7 @@ const instrument = Instrument_Sans({
 
 
 export const metadata: Metadata = {
-  title: 'Hot Map — New York City',
+  title: 'CTP',
   description: 'The live pulse of NYC. Real-time vibe intelligence for coffee, bars, gyms, and everywhere in between.',
 };
 

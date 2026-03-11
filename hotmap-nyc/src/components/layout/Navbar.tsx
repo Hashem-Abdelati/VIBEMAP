@@ -31,9 +31,8 @@ export function Navbar() {
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="live-indicator" />
           <span className="font-display text-base font-light tracking-wide text-ghost group-hover:text-snow transition-colors">
-            Hot Map
+            CTP
           </span>
-          <span className="label-caps text-dim">NYC</span>
         </Link>
 
         {/* Center nav */}
