@@ -1,0 +1,186 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Category {
+  COFFEE
+  STUDY
+  LIBRARY
+  GYM
+  BAR
+  FOOD
+  PARK
+}
+
+enum Borough {
+  MANHATTAN
+  BROOKLYN
+  QUEENS
+  BRONX
+  STATEN_ISLAND
+}
+
+enum TrustBadge {
+  NEW_CONTRIBUTOR
+  TRUSTED_LOCAL
+  TOP_SPOTTER
+}
+
+enum NotificationType {
+  PLACE_TRENDING
+  PLACE_NEW_PINGS
+  NEIGHBORHOOD_ACTIVITY
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String    @unique
+  passwordHash  String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile       Profile?
+  pings         Ping[]
+  pingVotes     PingVote[]
+  savedPlaces   SavedPlace[]
+  notifications Notification[]
+  trustScore    TrustScore?
+}
+
+model Profile {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  avatarUrl    String?
+  bio          String?
+  borough      Borough?
+  neighborhood String?
+  interests    String[]  // e.g. ["studying", "coffee", "nightlife"]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model TrustScore {
+  id           String     @id @default(cuid())
+  userId       String     @unique
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score        Float      @default(0)
+  badge        TrustBadge @default(NEW_CONTRIBUTOR)
+  totalPings   Int        @default(0)
+  upvotesReceived Int     @default(0)
+  spamFlags    Int        @default(0)
+  lastPingAt   DateTime?
+  updatedAt    DateTime   @updatedAt
+}
+
+model Place {
+  id           String    @id @default(cuid())
+  name         String
+  address      String
+  neighborhood String
+  borough      Borough
+  category     Category
+  tags         String[]
+  lat          Float
+  lng          Float
+  
+  // Vibe aggregates (recalculated periodically)
+  avgCrowdLevel    Float?   // 1-5
+  avgNoiseLevel    Float?   // 1-5
+  avgStudyScore    Float?   // 1-5
+  avgWifiScore     Float?   // 1-5
+  avgSocialScore   Float?   // 1-5
+  vibeScore        Float?   // overall trending score
+  trendVelocity    Float?   // rate of recent activity
+  
+  description   String?
+  website       String?
+  googlePlaceId String?
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  pings        Ping[]
+  savedBy      SavedPlace[]
+  notifications Notification[]
+
+  @@index([lat, lng])
+  @@index([category])
+  @@index([borough])
+  @@index([vibeScore])
+}
+
+model Ping {
+  id          String   @id @default(cuid())
+  placeId     String
+  place       Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Vibe tags (stored as array for flexibility)
+  vibeTags    String[] // ["quiet", "good_for_studying", "wifi_good", etc.]
+  
+  // Numeric ratings (optional, derived from tags)
+  crowdLevel  Int?     // 1=empty, 2=light, 3=moderate, 4=busy, 5=packed
+  noiseLevel  Int?     // 1=silent, 2=quiet, 3=moderate, 4=loud, 5=very_loud
+  
+  note        String?  // Short optional text, max 150 chars
+  
+  // Scoring / trust
+  trustWeight Float    @default(1.0)
+  upvotes     Int      @default(0)
+  isSpam      Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime // pings decay after 3 hours by default
+
+  votes       PingVote[]
+  
+  @@index([placeId, createdAt])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+}
+
+model PingVote {
+  id        String   @id @default(cuid())
+  pingId    String
+  ping      Ping     @relation(fields: [pingId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isHelpful Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([pingId, userId])
+}
+
+model SavedPlace {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  placeId   String
+  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, placeId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  placeId   String?
+  place     Place?           @relation(fields: [placeId], references: [id], onDelete: SetNull)
+  message   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
+}
